@@ -7,11 +7,13 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
 
-  app.useGlobalPipes(new ValidationPipe({
+app.useGlobalPipes(
+  new ValidationPipe({
     whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }));
+    transform: true, 
+    transformOptions: { enableImplicitConversion: true },
+  }),
+);
 
   const config = new DocumentBuilder()
     .setTitle('Ferretería API')

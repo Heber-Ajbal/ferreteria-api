@@ -9,10 +9,15 @@ import { CreateProductDto, UpdateProductDto } from './dto/product.dto';
 export class ProductsController {
   constructor(private readonly service: CatalogService) {}
 
+ 
   @Get()
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'pageSize', required: false, type: Number })
   @ApiQuery({ name: 'categoryId', required: false, type: Number })
   @ApiQuery({ name: 'brandId', required: false, type: Number })
-  list(@Query() q: PaginationDto & { categoryId?: number; brandId?: number }) {
+  list(@Query() q: PaginationDto) {           // ✅ <— CAMBIO: usa SOLO el DTO
+    // console.log('products query =>', q);   // (debug opcional)
     return this.service.listProducts(q);
   }
 

@@ -16,20 +16,19 @@ export class SalesService {
   // Busca el carrito abierto o lo crea
   async createOrGetCart(userId: number, dto: CreateCartDto) {
     let cart = await this.prisma.sales.findFirst({
-      where: { customer_id: userId, status: 'CART' },
+      where: { created_by: userId, status: 'CART' },
     });
 
     if (!cart) {
       cart = await this.prisma.sales.create({
         data: {
-          customer_id: userId,
+          created_by: userId,
           status: 'CART',
           channel: 'WEB', // ajusta si tu enum usa otro valor
           tax_rate: dto.taxRate ?? 12,
           subtotal: 0,
           tax_amount: 0,
           discount_total: 0,
-          total: 0,
         },
       });
     }
@@ -39,7 +38,7 @@ export class SalesService {
 
   async getMyCart(userId: number) {
     const cart = await this.prisma.sales.findFirst({
-      where: { customer_id: userId, status: 'CART' },
+      where: { created_by: userId, status: 'CART' },
     });
 
     if (!cart) {
@@ -139,7 +138,7 @@ export class SalesService {
 
   private async ensureCart(userId: number) {
     const cart = await this.prisma.sales.findFirst({
-      where: { customer_id: userId, status: 'CART' },
+      where: { created_by: userId, status: 'CART' },
     });
     if (!cart) throw new NotFoundException('No hay carrito activo');
     return cart;
@@ -147,7 +146,7 @@ export class SalesService {
 
   private async getCartById(saleId: number, userId: number) {
     const sale = await this.prisma.sales.findFirst({
-      where: { sale_id: saleId, customer_id: userId },
+      where: { sale_id: saleId, created_by: userId },
       include: {
         // Si tu relación se llama 'sale_items' tal cual en schema.prisma, esto está OK.
         // Si se llama distinto (p. ej. 'items'), cámbialo aquí y más abajo.
@@ -177,8 +176,7 @@ export class SalesService {
       items,
       subtotal: Number(sale.subtotal),
       taxAmount: Number(sale.tax_amount),
-      discountTotal: Number(sale.discount_total ?? 0),
-      total: Number(sale.total),
+      discountTotal: Number(sale.discount_total ?? 0)
     };
   }
 
@@ -203,7 +201,6 @@ export class SalesService {
         subtotal: round2(subtotal),
         tax_amount: round2(taxAmount),
         discount_total: round2(0),
-        total: round2(total),
         updated_at: new Date(),
       },
     });

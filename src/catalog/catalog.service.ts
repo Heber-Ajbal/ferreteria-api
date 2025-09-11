@@ -9,11 +9,13 @@ export class CatalogService {
   
 
   // ---- helpers
-  private pageQuery({ page = 1, pageSize = 20 }: PaginationDto) {
-    const take = pageSize;
-    const skip = (page - 1) * pageSize;
-    return { take, skip };
-  }
+private pageQuery(q: PaginationDto) {
+  const page = Math.max(1, Number(q.page ?? 1));
+  const pageSize = Math.max(1, Math.min( Number(q.pageSize ?? 20), 500 )); // límite de seguridad opcional
+  const skip = (page - 1) * pageSize;
+  const take = pageSize;
+  return { page, pageSize, skip, take };
+}
 
   // ========================= CATEGORIES =========================
   async listCategories(q: PaginationDto) {
@@ -87,39 +89,39 @@ export class CatalogService {
   }
 
   // ========================= PRODUCTS =========================
-   async listProducts(q: PaginationDto & { categoryId?: number; brandId?: number }) {
-    const { skip, take } = this.pageQuery(q);
+async listProducts(q: PaginationDto & { categoryId?: number; brandId?: number }) {
+  const page = Math.max(1, Number(q.page ?? 1));
+  const pageSize = Math.max(1, Number(q.pageSize ?? 20));
+  const skip = (page - 1) * pageSize;
+  const take = pageSize;
 
+  const where: Prisma.productsWhereInput = {
+    ...(q.search?.trim()
+      ? {
+          OR: [
+            { name:    { contains: q.search } },   // 👈 sin "mode"
+            { sku:     { contains: q.search } },
+            { barcode: { contains: q.search } },
+          ],
+        }
+      : undefined),
+    ...(q.categoryId ? { category_id: Number(q.categoryId) } : undefined),
+    ...(q.brandId ? { brand_id: Number(q.brandId) } : undefined),
+  };
 
-    const where = {
-      AND: [
-        q.search
-          ? {
-              OR: [
-                { name: { contains: q.search } },
-                { sku: { contains: q.search } },
-                { barcode: { contains: q.search } },
-              ],
-            }
-          : {},
-        q.categoryId ? { category_id: q.categoryId } : {},
-        q.brandId ? { brand_id: q.brandId } : {},
-      ],
-    } as any;
+  const [data, total] = await Promise.all([
+    this.prisma.products.findMany({
+      where,
+      skip,
+      take,
+      orderBy: { product_id: 'desc' },
+      include: { categories: true, brands: true, units: true },
+    }),
+    this.prisma.products.count({ where }),
+  ]);
 
-    const [data, total] = await Promise.all([
-      this.prisma.products.findMany({
-        where,
-        skip,
-        take,
-        orderBy: { product_id: 'desc' },
-        include: { categories: true, brands: true, units: true },
-      }),
-      this.prisma.products.count({ where }),
-    ]);
-
-    return { data, meta: { page: q.page ?? 1, pageSize: q.pageSize ?? 20, total } };
-  }
+  return { data, meta: { page, pageSize, total } };
+}
 
   getProduct(id: number) {
     return this.prisma.products.findUnique({
