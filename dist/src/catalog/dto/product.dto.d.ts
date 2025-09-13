@@ -10,6 +10,7 @@ export declare class CreateProductDto {
     salePrice: number;
     isTaxable: boolean;
     minStock: number;
+    image_url?: string;
 }
 export declare class UpdateProductDto {
     sku?: string;
@@ -23,4 +24,5 @@ export declare class UpdateProductDto {
     salePrice?: number;
     isTaxable?: boolean;
     minStock?: number;
+    image_url?: string;
 }

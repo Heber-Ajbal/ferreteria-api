@@ -1,3 +1,4 @@
+// app.module.ts
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
@@ -5,12 +6,26 @@ import { HealthModule } from './health/health.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { HealthController } from './health/health.controller';
 import { UsersModule } from './users/users.module';
-import { UsersController } from './users/users.controller';
 import { AuthModule } from './auth/auth.module';
 import { SalesModule } from './sales/sales.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, HealthModule, CatalogModule, UsersModule, AuthModule, SalesModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    // 👇👇 ¡Esto sirve los archivos!
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'uploads'),
+      serveRoot: '/uploads',
+    }),
+    PrismaModule,
+    HealthModule,
+    CatalogModule,
+    UsersModule,
+    AuthModule,
+    SalesModule,
+  ],
   controllers: [HealthController],
 })
 export class AppModule {}

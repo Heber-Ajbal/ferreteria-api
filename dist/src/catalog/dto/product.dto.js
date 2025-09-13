@@ -25,6 +25,7 @@ class CreateProductDto {
     salePrice;
     isTaxable;
     minStock;
+    image_url;
 }
 exports.CreateProductDto = CreateProductDto;
 __decorate([
@@ -98,6 +99,12 @@ __decorate([
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
 ], CreateProductDto.prototype, "minStock", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'URL pública de la imagen principal' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateProductDto.prototype, "image_url", void 0);
 class UpdateProductDto {
     sku;
     name;
@@ -110,6 +117,7 @@ class UpdateProductDto {
     salePrice;
     isTaxable;
     minStock;
+    image_url;
 }
 exports.UpdateProductDto = UpdateProductDto;
 __decorate([
@@ -189,4 +197,10 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], UpdateProductDto.prototype, "minStock", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'URL pública de la imagen principal' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateProductDto.prototype, "image_url", void 0);
 //# sourceMappingURL=product.dto.js.map

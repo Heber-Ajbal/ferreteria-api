@@ -16,12 +16,26 @@ const health_controller_1 = require("./health/health.controller");
 const users_module_1 = require("./users/users.module");
 const auth_module_1 = require("./auth/auth.module");
 const sales_module_1 = require("./sales/sales.module");
+const serve_static_1 = require("@nestjs/serve-static");
+const path_1 = require("path");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [config_1.ConfigModule.forRoot({ isGlobal: true }), prisma_module_1.PrismaModule, health_module_1.HealthModule, catalog_module_1.CatalogModule, users_module_1.UsersModule, auth_module_1.AuthModule, sales_module_1.SalesModule],
+        imports: [
+            config_1.ConfigModule.forRoot({ isGlobal: true }),
+            serve_static_1.ServeStaticModule.forRoot({
+                rootPath: (0, path_1.join)(process.cwd(), 'uploads'),
+                serveRoot: '/uploads',
+            }),
+            prisma_module_1.PrismaModule,
+            health_module_1.HealthModule,
+            catalog_module_1.CatalogModule,
+            users_module_1.UsersModule,
+            auth_module_1.AuthModule,
+            sales_module_1.SalesModule,
+        ],
         controllers: [health_controller_1.HealthController],
     })
 ], AppModule);

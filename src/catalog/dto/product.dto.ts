@@ -35,6 +35,11 @@ export class CreateProductDto {
 
   @ApiProperty({ default: 0 }) @Type(() => Number) @IsNumber() @Min(0)
   minStock!: number;
+  
+  @ApiPropertyOptional({ description: 'URL pública de la imagen principal' })
+  @IsOptional()
+  @IsString()
+  image_url?: string;
 }
 
 export class UpdateProductDto {
@@ -70,4 +75,9 @@ export class UpdateProductDto {
 
   @ApiPropertyOptional() @Type(() => Number) @IsNumber() @Min(0) @IsOptional()
   minStock?: number;
+
+  @ApiPropertyOptional({ description: 'URL pública de la imagen principal' })
+  @IsOptional()
+  @IsString()
+  image_url?: string;
 }

@@ -145,6 +145,7 @@ export declare class CatalogService {
             sale_price: Prisma.Decimal;
             is_taxable: boolean;
             min_stock: Prisma.Decimal;
+            image_url: string | null;
         })[];
         meta: {
             page: number;
@@ -181,6 +182,7 @@ export declare class CatalogService {
         sale_price: Prisma.Decimal;
         is_taxable: boolean;
         min_stock: Prisma.Decimal;
+        image_url: string | null;
     }) | null, null, import("@prisma/client/runtime/library").DefaultArgs, Prisma.PrismaClientOptions>;
     createProduct(data: any): Prisma.Prisma__productsClient<{
         name: string;
@@ -196,6 +198,7 @@ export declare class CatalogService {
         sale_price: Prisma.Decimal;
         is_taxable: boolean;
         min_stock: Prisma.Decimal;
+        image_url: string | null;
     }, never, import("@prisma/client/runtime/library").DefaultArgs, Prisma.PrismaClientOptions>;
     updateProduct(id: number, data: any): Prisma.Prisma__productsClient<{
         name: string;
@@ -211,6 +214,7 @@ export declare class CatalogService {
         sale_price: Prisma.Decimal;
         is_taxable: boolean;
         min_stock: Prisma.Decimal;
+        image_url: string | null;
     }, never, import("@prisma/client/runtime/library").DefaultArgs, Prisma.PrismaClientOptions>;
     deleteProduct(id: number): Prisma.Prisma__productsClient<{
         name: string;
@@ -226,5 +230,6 @@ export declare class CatalogService {
         sale_price: Prisma.Decimal;
         is_taxable: boolean;
         min_stock: Prisma.Decimal;
+        image_url: string | null;
     }, never, import("@prisma/client/runtime/library").DefaultArgs, Prisma.PrismaClientOptions>;
 }

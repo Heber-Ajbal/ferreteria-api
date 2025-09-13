@@ -93,6 +93,9 @@ model products {
   units               units                 @relation(fields: [unit_id], references: [unit_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_products_unit")
   purchase_items      purchase_items[]
   sale_items          sale_items[]
+    // NUEVO:
+  image_url    String?  @db.VarChar(500)
+
 
   @@index([unit_id], map: "fk_products_unit")
   @@index([brand_id], map: "ix_products_brand")
