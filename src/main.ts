@@ -4,16 +4,30 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: true });
+function parseOrigins(v?: string) {
+  if (!v) return true;            // permite todo mientras pruebas
+  return v.split(',').map(s => s.trim());
+}
 
-app.useGlobalPipes(
-  new ValidationPipe({
-    whitelist: true,
-    transform: true, 
-    transformOptions: { enableImplicitConversion: true },
-  }),
-);
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
+
+  // 🔐 CORS explícito (incluye Authorization)
+  app.enableCors({
+    origin: parseOrigins(process.env.CORS_ORIGIN),
+    credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type, Authorization',
+    exposedHeaders: 'Content-Disposition',
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Ferretería API')
@@ -24,12 +38,8 @@ app.useGlobalPipes(
   const doc = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, doc);
 
-  // Fuerza host/puerto explícitos
   const port = Number(process.env.PORT ?? 3000);
-  const host = '0.0.0.0'; // también vale '127.0.0.1'
-
-  await app.listen(port, host);
-  // eslint-disable-next-line no-console
-  console.log(`✅ API viva:  http://localhost:${port}  |  📚 Swagger: http://localhost:${port}/docs`);
+  await app.listen(port, '0.0.0.0');
+  console.log(`✅ API viva en :${port} | Swagger: /docs`);
 }
 bootstrap();
