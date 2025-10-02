@@ -6,20 +6,20 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SalesModule = void 0;
+exports.PurchasesModule = void 0;
 const common_1 = require("@nestjs/common");
-const sales_service_1 = require("./sales.service");
-const sales_controller_1 = require("./sales.controller");
-const prisma_module_1 = require("../prisma/prisma.module");
+const purchases_controller_1 = require("./purchases.controller");
+const purchases_service_1 = require("./purchases.service");
+const prisma_service_1 = require("../prisma/prisma.service");
 const db_module_1 = require("../prisma/db.module");
-let SalesModule = class SalesModule {
+let PurchasesModule = class PurchasesModule {
 };
-exports.SalesModule = SalesModule;
-exports.SalesModule = SalesModule = __decorate([
+exports.PurchasesModule = PurchasesModule;
+exports.PurchasesModule = PurchasesModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, db_module_1.DbModule],
-        controllers: [sales_controller_1.SalesController],
-        providers: [sales_service_1.SalesService],
+        imports: [db_module_1.DbModule],
+        controllers: [purchases_controller_1.PurchasesController],
+        providers: [purchases_service_1.PurchasesService, prisma_service_1.PrismaService],
     })
-], SalesModule);
-//# sourceMappingURL=sales.module.js.map
+], PurchasesModule);
+//# sourceMappingURL=purchases.module.js.map

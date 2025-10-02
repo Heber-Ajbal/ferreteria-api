@@ -12,13 +12,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SalesService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const db_provider_1 = require("../prisma/db.provider");
 function round2(n) {
     return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 let SalesService = class SalesService {
     prisma;
-    constructor(prisma) {
+    db;
+    constructor(prisma, db) {
         this.prisma = prisma;
+        this.db = db;
     }
     async createOrGetCart(userId, dto) {
         let cart = await this.prisma.sales.findFirst({
@@ -105,19 +108,28 @@ let SalesService = class SalesService {
         await this.recalcTotals(cart.sale_id);
         return this.getCartById(cart.sale_id, userId);
     }
-    async checkout(userId, _dto) {
-        const cart = await this.ensureCart(userId);
-        const items = await this.prisma.sale_items.findMany({
-            where: { sale_id: cart.sale_id },
+    async checkout(userId, dto) {
+        const cart = await this.prisma.sales.findFirst({
+            where: { created_by: userId, status: 'CART' },
         });
+        if (!cart)
+            throw new common_1.NotFoundException('No hay carrito activo');
+        const items = await this.prisma.sale_items.findMany({ where: { sale_id: cart.sale_id } });
         if (items.length === 0)
             throw new common_1.BadRequestException('El carrito está vacío');
         await this.recalcTotals(cart.sale_id);
-        const updated = await this.prisma.sales.update({
-            where: { sale_id: cart.sale_id },
-            data: { status: 'PAID', updated_at: new Date() },
-        });
-        return { saleId: updated.sale_id, status: updated.status, total: Number(updated.total) };
+        const sale = await this.prisma.sales.findUnique({ where: { sale_id: cart.sale_id } });
+        if (!sale)
+            throw new common_1.NotFoundException('Venta no encontrada');
+        const expectedTotal = round2(Number(sale.subtotal) + Number(sale.tax_amount));
+        const amount = expectedTotal;
+        const code = (dto.paymentMethodCode ?? 'CASH').toUpperCase();
+        const method = await this.prisma.payment_methods.findUnique({ where: { code } });
+        if (!method)
+            throw new common_1.BadRequestException(`paymentMethodCode inválido: ${code}`);
+        await this.db.callCheckoutSP(cart.sale_id, method.payment_method_id, amount, null, userId, false);
+        const paid = await this.prisma.sales.findUnique({ where: { sale_id: cart.sale_id } });
+        return { saleId: paid?.sale_id, status: paid?.status, total: Number(paid?.total) };
     }
     async ensureCart(userId) {
         const cart = await this.prisma.sales.findFirst({
@@ -179,6 +191,6 @@ let SalesService = class SalesService {
 exports.SalesService = SalesService;
 exports.SalesService = SalesService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService, db_provider_1.DbProvider])
 ], SalesService);
 //# sourceMappingURL=sales.service.js.map

@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { DbProvider } from '../prisma/db.provider';
 import { CreateCartDto } from './dto/create-cart.dto';
 import { AddItemDto } from './dto/add-item.dto';
 import { SetItemDto } from './dto/set-item.dto';
@@ -11,7 +12,7 @@ function round2(n: number) {
 
 @Injectable()
 export class SalesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly db: DbProvider,) {}
 
   // Busca el carrito abierto o lo crea
   async createOrGetCart(userId: number, dto: CreateCartDto) {
@@ -115,25 +116,46 @@ export class SalesService {
   }
 
   // Confirma compra (MVP: solo cambia status y recalcula)
-  async checkout(userId: number, _dto: CheckoutDto) {
-    const cart = await this.ensureCart(userId);
-
-    const items = await this.prisma.sale_items.findMany({
-      where: { sale_id: cart.sale_id },
+async checkout(userId: number, dto: CheckoutDto) {
+    // 1) Carrito en CART del usuario
+    const cart = await this.prisma.sales.findFirst({
+      where: { created_by: userId, status: 'CART' },
     });
+    if (!cart) throw new NotFoundException('No hay carrito activo');
+
+    // 2) Debe tener ítems
+    const items = await this.prisma.sale_items.findMany({ where: { sale_id: cart.sale_id } });
     if (items.length === 0) throw new BadRequestException('El carrito está vacío');
 
+    // 3) Recalcular totales
     await this.recalcTotals(cart.sale_id);
 
-    const updated = await this.prisma.sales.update({
-      where: { sale_id: cart.sale_id },
-      data: { status: 'PAID', updated_at: new Date() },
-    });
+    // 4) Leer totales actuales (el SP vuelve a validar)
+    const sale = await this.prisma.sales.findUnique({ where: { sale_id: cart.sale_id } });
+    if (!sale) throw new NotFoundException('Venta no encontrada');
 
-    // (Opcional) aquí podrías crear un Payment y descontar stock con movimientos
-    return { saleId: updated.sale_id, status: updated.status, total: Number(updated.total) };
+    const expectedTotal = round2(Number(sale.subtotal) + Number(sale.tax_amount));
+    const amount = expectedTotal; // lo que cobraremos
+
+    // 5) Resolver método de pago por CODE (default CASH)
+    const code = (dto.paymentMethodCode ?? 'CASH').toUpperCase();
+    const method = await this.prisma.payment_methods.findUnique({ where: { code } });
+    if (!method) throw new BadRequestException(`paymentMethodCode inválido: ${code}`);
+
+    // 6) Llamar SP: crea payment, descuenta stock y marca PAID
+    await this.db.callCheckoutSP(
+      cart.sale_id,
+      method.payment_method_id,
+      amount,
+      null,          // refNumber: ajusta si luego agregas en el DTO
+      userId,        // received_by
+      false,         // allowNegativeStock (cámbialo si deseas permitirlo)
+    );
+
+    // 7) Respuesta
+    const paid = await this.prisma.sales.findUnique({ where: { sale_id: cart.sale_id } });
+    return { saleId: paid?.sale_id, status: paid?.status, total: Number(paid?.total) };
   }
-
   // ====================== Helpers ======================
 
   private async ensureCart(userId: number) {

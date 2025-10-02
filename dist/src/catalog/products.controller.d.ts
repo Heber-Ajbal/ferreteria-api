@@ -13,28 +13,28 @@ export declare class ProductsController {
             } | null;
             categories: {
                 name: string;
-                category_id: number;
                 description: string | null;
+                category_id: number;
             } | null;
             units: {
                 name: string;
-                unit_id: number;
                 code: string;
+                unit_id: number;
             };
         } & {
-            product_id: number;
-            sku: string;
             name: string;
+            description: string | null;
+            created_at: Date;
             category_id: number | null;
             brand_id: number | null;
             unit_id: number;
             barcode: string | null;
-            description: string | null;
+            sku: string;
+            product_id: number;
             cost_price: import("@prisma/client/runtime/library").Decimal;
             sale_price: import("@prisma/client/runtime/library").Decimal;
             is_taxable: boolean;
             min_stock: import("@prisma/client/runtime/library").Decimal;
-            created_at: Date;
             image_url: string | null;
         })[];
         meta: {
@@ -50,76 +50,76 @@ export declare class ProductsController {
         } | null;
         categories: {
             name: string;
-            category_id: number;
             description: string | null;
+            category_id: number;
         } | null;
         units: {
             name: string;
-            unit_id: number;
             code: string;
+            unit_id: number;
         };
     } & {
-        product_id: number;
-        sku: string;
         name: string;
+        description: string | null;
+        created_at: Date;
         category_id: number | null;
         brand_id: number | null;
         unit_id: number;
         barcode: string | null;
-        description: string | null;
+        sku: string;
+        product_id: number;
         cost_price: import("@prisma/client/runtime/library").Decimal;
         sale_price: import("@prisma/client/runtime/library").Decimal;
         is_taxable: boolean;
         min_stock: import("@prisma/client/runtime/library").Decimal;
-        created_at: Date;
         image_url: string | null;
     }) | null, null, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     create(dto: CreateProductDto): import("@prisma/client").Prisma.Prisma__productsClient<{
-        product_id: number;
-        sku: string;
         name: string;
+        description: string | null;
+        created_at: Date;
         category_id: number | null;
         brand_id: number | null;
         unit_id: number;
         barcode: string | null;
-        description: string | null;
+        sku: string;
+        product_id: number;
         cost_price: import("@prisma/client/runtime/library").Decimal;
         sale_price: import("@prisma/client/runtime/library").Decimal;
         is_taxable: boolean;
         min_stock: import("@prisma/client/runtime/library").Decimal;
-        created_at: Date;
         image_url: string | null;
     }, never, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     update(id: number, dto: UpdateProductDto): import("@prisma/client").Prisma.Prisma__productsClient<{
-        product_id: number;
-        sku: string;
         name: string;
+        description: string | null;
+        created_at: Date;
         category_id: number | null;
         brand_id: number | null;
         unit_id: number;
         barcode: string | null;
-        description: string | null;
+        sku: string;
+        product_id: number;
         cost_price: import("@prisma/client/runtime/library").Decimal;
         sale_price: import("@prisma/client/runtime/library").Decimal;
         is_taxable: boolean;
         min_stock: import("@prisma/client/runtime/library").Decimal;
-        created_at: Date;
         image_url: string | null;
     }, never, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     remove(id: number): import("@prisma/client").Prisma.Prisma__productsClient<{
-        product_id: number;
-        sku: string;
         name: string;
+        description: string | null;
+        created_at: Date;
         category_id: number | null;
         brand_id: number | null;
         unit_id: number;
         barcode: string | null;
-        description: string | null;
+        sku: string;
+        product_id: number;
         cost_price: import("@prisma/client/runtime/library").Decimal;
         sale_price: import("@prisma/client/runtime/library").Decimal;
         is_taxable: boolean;
         min_stock: import("@prisma/client/runtime/library").Decimal;
-        created_at: Date;
         image_url: string | null;
     }, never, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     uploadImage(id: number, file: Express.Multer.File, req: ExpressRequest): Promise<{

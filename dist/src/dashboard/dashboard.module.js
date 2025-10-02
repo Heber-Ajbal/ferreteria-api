@@ -6,20 +6,19 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SalesModule = void 0;
+exports.DashboardModule = void 0;
 const common_1 = require("@nestjs/common");
-const sales_service_1 = require("./sales.service");
-const sales_controller_1 = require("./sales.controller");
-const prisma_module_1 = require("../prisma/prisma.module");
-const db_module_1 = require("../prisma/db.module");
-let SalesModule = class SalesModule {
+const dashboard_controller_1 = require("./dashboard.controller");
+const dashboard_service_1 = require("./dashboard.service");
+const db_provider_1 = require("../prisma/db.provider");
+let DashboardModule = class DashboardModule {
 };
-exports.SalesModule = SalesModule;
-exports.SalesModule = SalesModule = __decorate([
+exports.DashboardModule = DashboardModule;
+exports.DashboardModule = DashboardModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, db_module_1.DbModule],
-        controllers: [sales_controller_1.SalesController],
-        providers: [sales_service_1.SalesService],
+        controllers: [dashboard_controller_1.DashboardController],
+        providers: [dashboard_service_1.DashboardService, db_provider_1.DbProvider],
+        exports: [dashboard_service_1.DashboardService],
     })
-], SalesModule);
-//# sourceMappingURL=sales.module.js.map
+], DashboardModule);
+//# sourceMappingURL=dashboard.module.js.map

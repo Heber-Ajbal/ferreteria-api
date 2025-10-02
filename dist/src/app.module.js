@@ -17,6 +17,8 @@ const users_module_1 = require("./users/users.module");
 const auth_module_1 = require("./auth/auth.module");
 const sales_module_1 = require("./sales/sales.module");
 const serve_static_1 = require("@nestjs/serve-static");
+const dashboard_module_1 = require("./dashboard/dashboard.module");
+const purchases_module_1 = require("./purchases/purchases.module");
 const path_1 = require("path");
 let AppModule = class AppModule {
 };
@@ -35,6 +37,8 @@ exports.AppModule = AppModule = __decorate([
             users_module_1.UsersModule,
             auth_module_1.AuthModule,
             sales_module_1.SalesModule,
+            dashboard_module_1.DashboardModule,
+            purchases_module_1.PurchasesModule
         ],
         controllers: [health_controller_1.HealthController],
     })

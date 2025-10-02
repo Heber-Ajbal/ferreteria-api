@@ -94,8 +94,8 @@ export declare class SalesController {
         discountTotal: number;
     }>;
     checkout(req: any, dto: CheckoutDto): Promise<{
-        saleId: number;
-        status: import("@prisma/client").$Enums.sales_status;
+        saleId: number | undefined;
+        status: import("@prisma/client").$Enums.sales_status | undefined;
         total: number;
     }>;
 }
