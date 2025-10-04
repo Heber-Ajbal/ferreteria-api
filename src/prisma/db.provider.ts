@@ -325,7 +325,6 @@ async callCheckoutSP(
       `
       UPDATE sales
          SET status = 'PAID',
-             paid_at = CURRENT_TIMESTAMP,
              updated_at = CURRENT_TIMESTAMP
        WHERE sale_id = ?
       `,
