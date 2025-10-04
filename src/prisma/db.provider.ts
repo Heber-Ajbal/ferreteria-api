@@ -224,11 +224,12 @@ async callCheckoutSP(
 
     // 2) Recalcular totales (equivalente a sp_UpdateSaleTotals)
     //    Ajusta a tu esquema real si usas otros campos (promos, impuestos a nivel item, etc.)
+    
     const [totRows] = await conn.query(
       `
       SELECT
         COALESCE(SUM(si.qty * si.unit_price), 0)                      AS subtotal_calc,
-        COALESCE(SUM(si.discount_amount), 0)                          AS discount_calc,
+        COALESCE(SUM(si.discount_amt), 0)                          AS discount_calc,
         -- Si manejas impuestos por item, suma aquí; si no, usa el de la tabla sales
         0                                                             AS tax_items
       FROM sale_items si
