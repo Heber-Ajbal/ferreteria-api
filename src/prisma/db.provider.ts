@@ -180,28 +180,166 @@ async callDashboardSP(from: Date, to: Date) {
     await this.pool.end();
   }
 
-  async callCheckoutSP(
-    saleId: number,
-    paymentMethodId: number,
-    amount: number,
-    refNumber: string | null,
-    receivedBy: number,
-    allowNegativeStock: boolean
-  ) {
-    const conn = await this.pool.getConnection();
-    try {
-      await conn.query("CALL sp_Checkout(?,?,?,?,?,?)", [
-        saleId,
-        paymentMethodId,
-        amount,
-        refNumber,
-        receivedBy,
-        allowNegativeStock ? 1 : 0,
-      ]);
-    } finally {
-      conn.release();
+async callCheckoutSP(
+  saleId: number,
+  paymentMethodId: number,
+  amount: number,
+  refNumber: string | null,
+  receivedBy: number,
+  allowNegativeStock: boolean
+) {
+  const conn = await this.pool.getConnection();
+  // util para redondeo monetario
+  const round2 = (n: any) => Math.round(Number(n ?? 0) * 100) / 100;
+
+  try {
+    // 🔒 Transacción
+    await conn.beginTransaction();
+
+    // 1) Validaciones básicas (+ lock del row de la venta)
+    const [saleRows] = await conn.query(
+      `SELECT sale_id, status, total, subtotal, discount_total, tax_amount
+         FROM sales
+        WHERE sale_id = ?
+        FOR UPDATE`,
+      [saleId]
+    );
+    if (!Array.isArray(saleRows) || saleRows.length === 0) {
+      throw new Error('Venta no existe');
     }
+    const sale = saleRows[0] as any;
+
+    if (!['CART', 'PLACED'].includes(sale.status)) {
+      throw new Error('La venta no está en estado válido para checkout');
+    }
+
+    const [itemsCountRows] = await conn.query(
+      `SELECT COUNT(*) AS c FROM sale_items WHERE sale_id = ?`,
+      [saleId]
+    );
+    const itemsCount = (itemsCountRows as any[])[0]?.c ?? 0;
+    if (itemsCount === 0) {
+      throw new Error('El carrito está vacío');
+    }
+
+    // 2) Recalcular totales (equivalente a sp_UpdateSaleTotals)
+    //    Ajusta a tu esquema real si usas otros campos (promos, impuestos a nivel item, etc.)
+    const [totRows] = await conn.query(
+      `
+      SELECT
+        COALESCE(SUM(si.qty * si.unit_price), 0)                      AS subtotal_calc,
+        COALESCE(SUM(si.discount_amount), 0)                          AS discount_calc,
+        -- Si manejas impuestos por item, suma aquí; si no, usa el de la tabla sales
+        0                                                             AS tax_items
+      FROM sale_items si
+      WHERE si.sale_id = ?
+      `,
+      [saleId]
+    );
+    const t = (totRows as any[])[0] || {};
+    // si tienes impuestos a nivel venta ya precalculados, úsalos
+    const taxAmount = round2(sale.tax_amount ?? t.tax_items ?? 0);
+    const subtotal = round2(t.subtotal_calc);
+    const discounts = round2(t.discount_calc);
+    const totalCalc = round2(subtotal - discounts + taxAmount);
+
+    await conn.query(
+      `
+      UPDATE sales
+         SET subtotal = ?,
+             discount_total = ?,
+             tax_amount = ?,
+             total = ?,
+             updated_at = CURRENT_TIMESTAMP
+       WHERE sale_id = ?`,
+      [subtotal, discounts, taxAmount, totalCalc, saleId]
+    );
+
+    // 3) Validar monto de pago
+    if (amount == null || round2(amount) !== round2(totalCalc)) {
+      throw new Error('El monto de pago no coincide con el total');
+    }
+
+    // 4) Validar stock (si no se permite negativo)
+    if (!allowNegativeStock) {
+      const [shortagesRows] = await conn.query(
+        `
+        SELECT COUNT(*) AS shortages
+        FROM (
+          SELECT
+            si.product_id,
+            SUM(si.qty) AS sale_qty,
+            COALESCE((
+              SELECT SUM(im.qty)
+              FROM inventory_movements im
+              WHERE im.product_id = si.product_id
+            ), 0) AS stock_qty
+          FROM sale_items si
+          WHERE si.sale_id = ?
+          GROUP BY si.product_id
+        ) t
+        WHERE t.stock_qty < t.sale_qty
+        `,
+        [saleId]
+      );
+      const shortages = (shortagesRows as any[])[0]?.shortages ?? 0;
+      if (shortages > 0) {
+        throw new Error('Stock insuficiente para uno o más productos');
+      }
+    }
+
+    // 5) Generar movimientos de inventario (salida)
+    await conn.query(
+      `
+      INSERT INTO inventory_movements
+        (product_id, movement_type, reference_type, reference_id, qty, unit_cost, unit_price, notes, created_at)
+      SELECT
+        si.product_id,
+        'OUT_SALE',
+        'SALE',
+        ?,
+        -si.qty,
+        NULL,
+        si.unit_price,
+        NULL,
+        CURRENT_TIMESTAMP
+      FROM sale_items si
+      WHERE si.sale_id = ?
+      `,
+      [saleId, saleId]
+    );
+
+    // 6) Registrar pago
+    await conn.query(
+      `
+      INSERT INTO payments
+        (sale_id, payment_method_id, amount, ref_number, received_by, created_at)
+      VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      `,
+      [saleId, paymentMethodId, totalCalc, refNumber, receivedBy]
+    );
+
+    // 7) Actualizar estado de venta → PAID
+    await conn.query(
+      `
+      UPDATE sales
+         SET status = 'PAID',
+             paid_at = CURRENT_TIMESTAMP,
+             updated_at = CURRENT_TIMESTAMP
+       WHERE sale_id = ?
+      `,
+      [saleId]
+    );
+
+    await conn.commit();
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
   }
+}
+
 
   async callReceivePurchaseSP(purchaseId: number, userId: number) {
     const conn = await this.pool.getConnection();
