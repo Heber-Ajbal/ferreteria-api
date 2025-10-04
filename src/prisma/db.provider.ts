@@ -88,7 +88,7 @@ async callDashboardSP(from: Date, to: Date) {
       SELECT
         i.product_id, i.product_name,
         SUM(i.qty)        AS units,
-        SUM(i.line_total) AS revenue
+        SUM(i.unit_price) AS revenue
       FROM vw_paid_sale_items i
       JOIN vw_paid_sales s ON s.sale_id = i.sale_id
       WHERE s.paid_at >= ? AND s.paid_at < ?
