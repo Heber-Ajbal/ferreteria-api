@@ -341,12 +341,97 @@ async callCheckoutSP(
 }
 
 
-  async callReceivePurchaseSP(purchaseId: number, userId: number) {
-    const conn = await this.pool.getConnection();
-    try {
-      await conn.query("CALL sp_ReceivePurchase(?, ?)", [purchaseId, userId]);
-    } finally {
-      conn.release();
+ async callReceivePurchaseSP(purchaseId: number, userId: number) {
+  const conn = await this.pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    // 1) Validar compra y bloquear fila
+    const [purchaseRows] = await conn.query(
+      `SELECT purchase_id, status, created_by, created_at
+         FROM purchases
+        WHERE purchase_id = ?
+        FOR UPDATE`,
+      [purchaseId]
+    );
+    if (!Array.isArray(purchaseRows) || purchaseRows.length === 0) {
+      throw new Error('Compra no existe');
     }
+    const purchase = purchaseRows[0] as any;
+
+    if (purchase.status === 'CANCELLED') {
+      throw new Error('Compra cancelada');
+    }
+
+    // 2) Evitar doble recepción (ya hay movimientos para esta compra)
+    const [movCountRows] = await conn.query(
+      `SELECT COUNT(*) AS c
+         FROM inventory_movements
+        WHERE reference_type = 'PURCHASE'
+          AND reference_id = ?`,
+      [purchaseId]
+    );
+    const movCount = (movCountRows as any[])[0]?.c ?? 0;
+    if (movCount > 0) {
+      throw new Error('La compra ya fue recibida');
+    }
+
+    // 3) Insertar movimientos de ENTRADA desde los renglones de compra
+    await conn.query(
+      `
+      INSERT INTO inventory_movements
+        (product_id, movement_type, reference_type, reference_id, qty, unit_cost, unit_price, notes, created_at)
+      SELECT
+        pi.product_id,
+        'IN_PURCHASE',
+        'PURCHASE',
+        ?,
+        pi.qty,
+        pi.unit_cost,
+        NULL,
+        NULL,
+        CURRENT_TIMESTAMP
+      FROM purchase_items pi
+      WHERE pi.purchase_id = ?
+      `,
+      [purchaseId, purchaseId]
+    );
+
+    // 4) Recalcular totales de la compra (subtotales e impuestos de los renglones)
+    const [totalsRows] = await conn.query(
+      `
+      SELECT
+        COALESCE(SUM(line_subtotal), 0) AS v_subtot,
+        COALESCE(SUM(line_tax), 0)      AS v_tax
+      FROM purchase_items
+      WHERE purchase_id = ?
+      `,
+      [purchaseId]
+    );
+    const totals = (totalsRows as any[])[0] || { v_subtot: 0, v_tax: 0 };
+
+    // 5) Actualizar compra → RECEIVED
+    //    (mantengo tu lógica: si created_by es NULL, lo seteo a userId;
+    //     created_at queda "sin cambios")
+    await conn.query(
+      `
+      UPDATE purchases
+         SET subtotal   = ?,
+             tax_amount = ?,
+             status     = 'RECEIVED',
+             created_by = IFNULL(created_by, ?)
+       WHERE purchase_id = ?
+      `,
+      [totals.v_subtot, totals.v_tax, userId, purchaseId]
+    );
+
+    await conn.commit();
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
   }
+}
+
 }
