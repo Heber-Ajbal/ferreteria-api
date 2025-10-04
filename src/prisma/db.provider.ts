@@ -314,7 +314,7 @@ async callCheckoutSP(
     await conn.query(
       `
       INSERT INTO payments
-        (sale_id, payment_method_id, amount, ref_number, received_by, created_at)
+        (sale_id, payment_method_id, amount, ref_number, received_by, paid_at)
       VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
       `,
       [saleId, paymentMethodId, totalCalc, refNumber, receivedBy]
