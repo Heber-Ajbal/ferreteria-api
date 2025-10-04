@@ -11,6 +11,7 @@ import { SalesModule } from './sales/sales.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { PurchasesModule } from './purchases/purchases.module';
+import { ReportsModule } from './reports/reports.module';
 import { join } from 'path';
 
 @Module({
@@ -28,7 +29,8 @@ import { join } from 'path';
     AuthModule,
     SalesModule,
     DashboardModule,
-    PurchasesModule
+    PurchasesModule,
+    ReportsModule
   ],
   controllers: [HealthController],
 })
