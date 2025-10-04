@@ -2,7 +2,8 @@ import { Injectable, OnModuleDestroy } from "@nestjs/common";
 import mysql from "mysql2/promise";
 
 function fromDatabaseUrl(urlStr: string) {
-  // Ej: mysql://USER:PASS@gateway01.us-east-1.prod.tidbcloud.com:4000/ferreteria_db
+  // Formato esperado:
+  // mysql://USER:PASS@gateway01.us-east-1.prod.aws.tidbcloud.com:4000/ferreteria_db
   const u = new URL(urlStr);
   return {
     host: u.hostname,
@@ -32,11 +33,12 @@ export class DbProvider implements OnModuleDestroy {
       database: cfg.database,
       waitForConnections: true,
       connectionLimit: 10,
+      // TLS para mysql2 (SslOptions): sin 'servername' (no existe en el tipo)
       ssl: {
         minVersion: "TLSv1.2",
         rejectUnauthorized: true,
-        servername: cfg.host, // SNI
-        // ca: fs.readFileSync('./certs/isrgrootx1.pem','utf8'), // si tu runtime no trae CAs (normalmente no hace falta)
+        // Si el runtime no trae CAs y falla por certificado, descomenta y agrega el root:
+        // ca: fs.readFileSync('./certs/isrgrootx1.pem', 'utf8'),
       },
     });
   }
@@ -45,6 +47,7 @@ export class DbProvider implements OnModuleDestroy {
     const conn = await this.pool.getConnection();
     try {
       const [rows] = await conn.query("CALL sp_AdminSalesDashboard(?, ?)", [from, to]);
+      // mysql2 retorna [ [rs1], [rs2], ..., OkPacket ]
       return (rows as any[]).filter(Array.isArray);
     } finally {
       conn.release();
