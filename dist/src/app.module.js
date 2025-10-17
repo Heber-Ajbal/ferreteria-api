@@ -19,6 +19,7 @@ const sales_module_1 = require("./sales/sales.module");
 const serve_static_1 = require("@nestjs/serve-static");
 const dashboard_module_1 = require("./dashboard/dashboard.module");
 const purchases_module_1 = require("./purchases/purchases.module");
+const reports_module_1 = require("./reports/reports.module");
 const path_1 = require("path");
 let AppModule = class AppModule {
 };
@@ -38,7 +39,8 @@ exports.AppModule = AppModule = __decorate([
             auth_module_1.AuthModule,
             sales_module_1.SalesModule,
             dashboard_module_1.DashboardModule,
-            purchases_module_1.PurchasesModule
+            purchases_module_1.PurchasesModule,
+            reports_module_1.ReportsModule
         ],
         controllers: [health_controller_1.HealthController],
     })

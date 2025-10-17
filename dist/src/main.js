@@ -17,7 +17,7 @@ async function bootstrap() {
         transformOptions: { enableImplicitConversion: true },
     }));
     app.enableCors({
-        origin: parseOrigins(process.env.CORS_ORIGIN),
+        origin: true,
         credentials: true,
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         allowedHeaders: 'Content-Type, Authorization',

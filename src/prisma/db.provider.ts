@@ -34,12 +34,12 @@ export class DbProvider implements OnModuleDestroy {
       waitForConnections: true,
       connectionLimit: 10,
       // TLS para mysql2 (SslOptions): sin 'servername' (no existe en el tipo)
-      ssl: {
-        minVersion: "TLSv1.2",
-        rejectUnauthorized: true,
-        // Si el runtime no trae CAs y falla por certificado, descomenta y agrega el root:
-        // ca: fs.readFileSync('./certs/isrgrootx1.pem', 'utf8'),
-      },
+      // ssl: {
+      //   minVersion: "TLSv1.2",
+      //   rejectUnauthorized: false,
+      //   // Si el runtime no trae CAs y falla por certificado, descomenta y agrega el root:
+      //   // ca: fs.readFileSync('./certs/isrgrootx1.pem', 'utf8'),
+      // },
     });
   }
 
